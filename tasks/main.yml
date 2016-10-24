@@ -1,0 +1,53 @@
+---
+# tasks file for docker-grafana
+  - name: install docker.io
+    sudo: yes
+    apt: name=docker.io state=latest
+  - name: download collectd-write-graphite.tar
+    sudo: yes
+    shell: wget http://192.168.0.82/dockergrafana/collectd-write-graphite.tar -O /tmp/collectd-write-graphite.tar && chmod 777 /tmp/collectd-write-graphite.tar
+  - name: download graphite.tar
+    sudo: yes
+    shell: wget http://192.168.0.82/dockergrafana/graphite.tar -O /tmp/graphite.tar && chmod 777 /tmp/graphite.tar
+  - name: download grafana.tar
+    sudo: yes
+    shell: wget http://192.168.0.82/dockergrafana/grafana.tar -O /tmp/grafana.tar && chmod 777 /tmp/grafana.tar
+  - name: docker load collectd-write-graphite
+    sudo: yes
+    command: docker load --input /tmp/collectd-write-graphite.tar
+  - name: docker load graphite
+    sudo: yes
+    command: docker load --input /tmp/graphite.tar
+  - name: docker load grafana
+    sudo: yes
+    command: docker load --input /tmp/grafana.tar
+  - name: docker run collectd-write-graphite
+    sudo: yes
+    command: docker run -d --name collectd andreasjansson/collectd-write-graphite /bin/sh -c start_container
+  - name: docker run graphite
+    sudo: yes
+    command: docker run -d -p 2003:2003 -p 8080:80 --name graphite sitespeedio/graphite /sbin/my_init
+  - name: docker run grafana
+    sudo: yes
+    command: docker run -d -p 3000:3000 --name grafana grafana/grafana
+  - name: copy collectddocker.service
+    sudo: yes
+    template: src=collectddocker.service dest=/lib/systemd/system/collectddocker.service
+  - name: copy graphite.service
+    sudo: yes
+    template: src=graphite.service dest=/lib/systemd/system/graphite.service
+  - name: copy grafana.service
+    sudo: yes
+    template: src=grafana.service dest=/lib/systemd/system/grafana.service
+  - name: enable collectddocker.service
+    sudo: yes
+    command: systemctl enable collectddocker.service
+  - name: enable graphite.service
+    sudo: yes
+    command: systemctl enable graphite.service
+  - name: enable grafana.service
+    sudo: yes
+    command: systemctl enable grafana.service
+
+
+
